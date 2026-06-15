@@ -33,12 +33,22 @@ def parse_source(path: str) -> dict[str, str]:
                 key, value = raw.split("=", 1)
                 key = key.strip()
                 value = sanitize_value(value)
-                if key.upper() in ("MERCHANT_ID", "MERCHANTID"):
+                key_upper = key.upper().replace(" ", "_")
+                if key_upper in ("MERCHANT_ID", "MERCHANTID"):
                     out["CLOVER_MERCHANT_ID"] = value
-                else:
+                elif key_upper in ("CLOVER_API_TOKEN", "NEW_CLOVER_API_TOKEN"):
+                    out["CLOVER_API_TOKEN"] = value
+                elif key.startswith("CLOVER_") or key.startswith("BP_"):
                     out[key] = value
                 continue
-            if raw.startswith("{"):
+            uuid_token = re.fullmatch(
+                r"([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})",
+                raw,
+                re.IGNORECASE,
+            )
+            if uuid_token:
+                out["CLOVER_API_TOKEN"] = uuid_token.group(1)
+                continue            if raw.startswith("{"):
                 try:
                     payload = json.loads(raw)
                     token = payload.get("access_token")
