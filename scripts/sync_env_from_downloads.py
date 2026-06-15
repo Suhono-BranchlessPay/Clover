@@ -48,7 +48,8 @@ def parse_source(path: str) -> dict[str, str]:
             )
             if uuid_token:
                 out["CLOVER_API_TOKEN"] = uuid_token.group(1)
-                continue            if raw.startswith("{"):
+                continue
+            if raw.startswith("{"):
                 try:
                     payload = json.loads(raw)
                     token = payload.get("access_token")
