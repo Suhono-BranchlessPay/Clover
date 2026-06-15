@@ -1,0 +1,17 @@
+{
+  "name": "branchlesspay-clover",
+  "version": "1.0.0-m1",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "build": "tsc --noEmit",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "typescript": "~5.6.3",
+    "vitest": "^2.1.8"
+  }
+}

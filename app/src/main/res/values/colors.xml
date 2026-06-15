@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="bp_primary">#1A237E</color>
+    <color name="bp_primary_dark">#0D1642</color>
+    <color name="bp_accent">#00C853</color>
+    <color name="bp_error">#C62828</color>
+    <color name="bp_surface">#F5F7FA</color>
+    <color name="status_pending">#F57C00</color>
+    <color name="status_pending_bg">#FFF3E0</color>
+    <color name="status_anchored">#2E7D32</color>
+    <color name="status_anchored_bg">#E8F5E9</color>
+    <color name="status_failed">#C62828</color>
+    <color name="status_failed_bg">#FFEBEE</color>
+    <color name="white">#FFFFFF</color>
+</resources>

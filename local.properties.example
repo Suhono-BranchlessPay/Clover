@@ -1,0 +1,11 @@
+# Copy to local.properties (gitignored) — do NOT commit real keys or keystore passwords
+sdk.dir=C\:\\Users\\Thinkbook\\AppData\\Local\\Android\\Sdk
+
+# Debug only — pre-fills Settings license field (not bundled in release APK)
+bp.license.key=
+
+# Release signing — run scripts/generate_release_keystore.ps1 once, then fill these:
+release.keystore.file=keystore/bp-audit-shield-release.jks
+release.keystore.password=
+release.key.alias=bp-audit-shield
+release.key.password=

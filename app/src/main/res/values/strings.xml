@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">BP Audit Shield</string>
+    <string name="settings_title">Settings</string>
+    <string name="tagline">Clover POS blockchain audit trail</string>
+    <string name="license_key_hint">BP License Key</string>
+    <string name="api_url_hint">BP API URL</string>
+    <string name="default_api_url">https://branchlesspay.com/api/v1/anchor</string>
+    <string name="test_connection">Test Connection</string>
+    <string name="test_anchor">Send Test Anchor</string>
+    <string name="open_settings">Settings</string>
+    <string name="status_idle">Status: Ready</string>
+    <string name="status_testing">Status: Testing…</string>
+    <string name="status_success">Status: Connected (HTTP %1$d)</string>
+    <string name="status_error">Status: Failed — %1$s</string>
+    <string name="anchor_success">Anchor queued: %1$s</string>
+    <string name="verify_url_label">Verify URL</string>
+    <string name="service_running">Background service: listening for payments</string>
+    <string name="service_notification_text">Anchoring Clover POS payments to BranchlessPay</string>
+    <string name="simulate_payment">Simulate Payment</string>
+    <string name="flush_queue">Flush Offline Queue</string>
+    <string name="queue_stats_default">Queue: pending 0 · anchored 0</string>
+    <string name="queue_stats">Queue: pending %1$d · anchored %2$d</string>
+    <string name="save">Save</string>
+    <string name="device_info">Device: %1$s · SN: %2$s</string>
+    <string name="transaction_history">Transaction History</string>
+    <string name="history_empty">No transactions yet. Simulate a payment to get started.</string>
+    <string name="verify_title">Verify Transaction</string>
+    <string name="verified_badge">✓ VERIFIED</string>
+    <string name="share_verify">Share Verify URL</string>
+    <string name="print_qr">Print QR</string>
+    <string name="open_verify">Open Verify Page</string>
+    <string name="history_pending_hint">Transaction still pending sync</string>
+    <string name="receipt_unavailable">Clover receipt printer not configured — use Share</string>
+    <string name="printer_sent">QR sent to receipt printer</string>
+    <string name="app_version">Version %1$s (%2$d)</string>
+    <string name="privacy_policy">Privacy Policy</string>
+    <string name="privacy_policy_url">https://branchlesspay.com/privacy</string>
+</resources>
