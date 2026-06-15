@@ -1,4 +1,4 @@
-import { CloverApiError, fetchOrder, fetchPayment } from './cloverApiClient.js'
+import { CloverApiError, fetchOrder, fetchPaymentWithFallback } from './cloverApiClient.js'
 import { createWorkerOptionsFromEnv } from './config.js'
 import {
   buildEnrichmentPatch,
@@ -77,7 +77,7 @@ export async function enrichCloverAnchor(
 
   try {
     if (paymentId) {
-      return await enrichFromPayment(merchantId, paymentId, eventType, options)
+      return await enrichFromPayment(merchantId, paymentId, eventType, options, orderId)
     }
 
     if (orderId) {
@@ -101,8 +101,14 @@ async function enrichFromPayment(
   paymentId: string,
   eventType: string,
   options: CloverEnrichmentWorkerOptions,
+  orderIdHint?: string,
 ): Promise<EnrichmentResult> {
-  const payment = await fetchPayment(options.api, merchantId, paymentId)
+  const payment = await fetchPaymentWithFallback(
+    options.api,
+    merchantId,
+    paymentId,
+    orderIdHint,
+  )
   let order
 
   const linkedOrderId = payment.order?.id
@@ -161,7 +167,12 @@ export async function enrichFromWebhookMerchant(
   for (const paymentId of paymentIds) {
     results.push(
       await enrichCloverAnchor(
-        { merchantId, paymentId, eventType: CLOVER_EVENT_PAYMENT_CREATED },
+        {
+          merchantId,
+          paymentId,
+          orderId: orderIds[0],
+          eventType: CLOVER_EVENT_PAYMENT_CREATED,
+        },
         options,
       ),
     )

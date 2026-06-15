@@ -3,6 +3,8 @@ import type { CloverApiConfig } from './types.js'
 /** Sandbox — default for M1 dev (NOT api.clover.com). */
 export const CLOVER_SANDBOX_API_BASE = 'https://apisandbox.dev.clover.com'
 
+export const CLOVER_ECOMMERCE_SANDBOX_BASE = 'https://scl-sandbox.dev.clover.com'
+
 export const CLOVER_PRODUCTION_API_BASE = 'https://api.clover.com'
 
 export interface CloverEnvConfig {
@@ -27,8 +29,10 @@ export function loadCloverConfigFromEnv(
 }
 
 export function toApiConfig(envConfig: CloverEnvConfig): CloverApiConfig {
+  const isSandbox = envConfig.apiBase.includes('apisandbox')
   return {
     apiBase: envConfig.apiBase,
+    ecommerceBase: isSandbox ? CLOVER_ECOMMERCE_SANDBOX_BASE : 'https://scl.clover.com',
     accessToken: envConfig.accessToken,
   }
 }

@@ -35,18 +35,26 @@ async function waitForPayment(
 ): Promise<string | null> {
   const options = createCloverEnrichmentWorker()
   const deadline = Date.now() + pollSeconds * 1000
+  let ticks = 0
   console.log(
-    `Polling sandbox payments (create a Cash sale in Clover sandbox Chrome) — up to ${pollSeconds}s...`,
+    `Polling sandbox payments — up to ${pollSeconds}s`,
   )
+  console.log('Guide: docs/SANDBOX_SALE_GUIDE.md')
+  console.log('Register: https://sandbox.dev.clover.com')
+  console.log(`Merchant ID must be: ${merchantId}\n`)
 
   while (Date.now() < deadline) {
     const payments = await listPayments(options.api, merchantId, 5)
+    ticks++
     if (payments.length > 0) {
-      console.log('Found payment:', payments[0].id, 'amount cents:', payments[0].amount)
+      console.log('\nFound payment:', payments[0].id, 'amount cents:', payments[0].amount)
       return payments[0].id
     }
-    await sleep(5000)
+    if (ticks % 6 === 0) {
+      console.log(`\n[${ticks * 5}s] still 0 payments on ${merchantId} — complete Cash sale in Register`)
+    }
     process.stdout.write('.')
+    await sleep(5000)
   }
   console.log('\nNo sandbox payments detected.')
   return null
@@ -101,27 +109,75 @@ async function main(): Promise<number> {
   console.log('Merchant:', env.merchantId)
 
   let paymentId = arg('payment-id', '')
+  const orderIdArg = arg('order-id', '')
   if (!paymentId) {
     const pollSeconds = Number(arg('poll-seconds', '180'))
     paymentId = (await waitForPayment(env.merchantId, pollSeconds)) ?? ''
   }
 
+  if (!paymentId && orderIdArg) {
+    const options = createCloverEnrichmentWorker()
+    const { results } = await processCloverWebhook(
+      {
+        merchants: {
+          [env.merchantId]: { orders: [{ objectId: orderIdArg }] },
+        },
+      },
+      options,
+    )
+    const result = results[0]
+    if (!result?.enriched || !result.payload) {
+      console.error('Order enrichment failed:', result?.error ?? result?.skipped)
+      return 1
+    }
+    console.log('Enriched from order:', result.payload.amount, result.payload.currency)
+    const response = await postBpAnchor(result.payload as unknown as Record<string, unknown>)
+    const text = await response.text()
+    console.log('BP anchor HTTP', response.status, text.slice(0, 400))
+    return response.ok || response.status === 202 ? 0 : 1
+  }
+
   if (!paymentId) {
-    console.log('TIP: In sandbox Chrome → Register / Orders → New Sale → Cash → Complete')
+    console.log('\nTIP: docs/SANDBOX_SALE_GUIDE.md')
+    console.log('  1. https://sandbox.dev.clover.com → merchant Bp Audit shield')
+    console.log('  2. Register → item → Cash → Complete (not just open cart)')
     return 2
   }
 
   const options = createCloverEnrichmentWorker()
-  const { results } = await processCloverWebhook(
+  const orderIds = orderIdArg ? [{ objectId: orderIdArg }] : []
+  let { results } = await processCloverWebhook(
     {
       merchants: {
-        [env.merchantId]: { payments: [{ objectId: paymentId }] },
+        [env.merchantId]: {
+          payments: [{ objectId: paymentId }],
+          orders: orderIds,
+        },
       },
     },
     options,
   )
 
-  const result = results[0]
+  let result = results[0]
+  if ((!result?.enriched || !result.payload) && arg('fixture', '') === 'true') {
+    const amountCents = Number(arg('amount-cents', '1400'))
+    const tipCents = Number(arg('tip-cents', '100'))
+    const { buildFixturePaymentPayload } = await import('../src/normalizer.js')
+    const payload = buildFixturePaymentPayload(env.merchantId, paymentId, {
+      orderId: orderIdArg,
+      amountCents,
+      tipCents,
+      paymentMethod: 'CREDIT_CARD',
+    })
+    result = {
+      enriched: true,
+      paymentId,
+      orderId: orderIdArg,
+      payload,
+      patch: (await import('../src/normalizer.js')).buildEnrichmentPatch(payload),
+    }
+    console.log('Using dashboard fixture (API token lacks ECOMM read permission)')
+  }
   if (!result?.enriched || !result.payload) {
     console.error('Enrichment failed:', result?.error ?? result?.skipped)
     return 1

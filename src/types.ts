@@ -113,6 +113,7 @@ export interface EnrichmentResult {
 
 export interface CloverApiConfig {
   apiBase?: string
+  ecommerceBase?: string
   accessToken: string
   fetchImpl?: typeof fetch
 }

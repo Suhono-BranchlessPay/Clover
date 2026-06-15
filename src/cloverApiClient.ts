@@ -1,7 +1,32 @@
 import type { CloverApiConfig, CloverOrder, CloverPayment } from './types.js'
-import { CLOVER_SANDBOX_API_BASE } from './config.js'
+import { CLOVER_ECOMMERCE_SANDBOX_BASE, CLOVER_SANDBOX_API_BASE } from './config.js'
 
 const DEFAULT_BASE = CLOVER_SANDBOX_API_BASE
+
+function ecommerceBase(config: CloverApiConfig): string {
+  return (config.ecommerceBase ?? CLOVER_ECOMMERCE_SANDBOX_BASE).replace(/\/$/, '')
+}
+
+async function cloverGetUrl<T>(
+  config: CloverApiConfig,
+  url: string,
+  label: string,
+): Promise<T> {
+  const fetchImpl = config.fetchImpl ?? fetch
+  const response = await fetchImpl(url, {
+    headers: {
+      Authorization: `Bearer ${config.accessToken}`,
+      Accept: 'application/json',
+    },
+  })
+
+  if (!response.ok) {
+    const text = await response.text().catch(() => '')
+    throw new CloverApiError(`Clover API ${response.status} for ${label}`, response.status, text)
+  }
+
+  return response.json() as Promise<T>
+}
 
 export class CloverApiError extends Error {
   constructor(
@@ -18,29 +43,21 @@ function baseUrl(config: CloverApiConfig): string {
   return (config.apiBase ?? DEFAULT_BASE).replace(/\/$/, '')
 }
 
-async function cloverGet<T>(
+async function cloverGet<T>(config: CloverApiConfig, path: string): Promise<T> {
+  return cloverGetUrl<T>(config, `${baseUrl(config)}${path}`, path)
+}
+
+/** ECOMM orders (scl-sandbox) — requires ecommerce read permission on token. */
+export async function fetchEcommerceOrder(
   config: CloverApiConfig,
-  path: string,
-): Promise<T> {
-  const fetchImpl = config.fetchImpl ?? fetch
-  const url = `${baseUrl(config)}${path}`
-  const response = await fetchImpl(url, {
-    headers: {
-      Authorization: `Bearer ${config.accessToken}`,
-      Accept: 'application/json',
-    },
-  })
-
-  if (!response.ok) {
-    const text = await response.text().catch(() => '')
-    throw new CloverApiError(
-      `Clover API ${response.status} for ${path}`,
-      response.status,
-      text,
-    )
-  }
-
-  return response.json() as Promise<T>
+  orderId: string,
+): Promise<Record<string, unknown>> {
+  const path = `/v1/orders/${encodeURIComponent(orderId)}`
+  return cloverGetUrl<Record<string, unknown>>(
+    config,
+    `${ecommerceBase(config)}${path}`,
+    path,
+  )
 }
 
 export async function fetchPayment(
@@ -53,6 +70,37 @@ export async function fetchPayment(
     config,
     `/v3/merchants/${encodeURIComponent(merchantId)}/payments/${encodeURIComponent(paymentId)}?expand=${expand}`,
   )
+}
+
+export async function fetchPaymentWithFallback(
+  config: CloverApiConfig,
+  merchantId: string,
+  paymentId: string,
+  orderId?: string,
+): Promise<CloverPayment> {
+  try {
+    return await fetchPayment(config, merchantId, paymentId)
+  } catch (restError) {
+    if (orderId) {
+      try {
+        const order = await fetchEcommerceOrder(config, orderId)
+        const amount = Number(order.amount ?? order.total ?? 0)
+        return {
+          id: paymentId,
+          amount,
+          tipAmount: Number(order.tipAmount ?? 0),
+          taxAmount: Number(order.taxAmount ?? 0),
+          currency: String(order.currency ?? 'USD'),
+          order: { id: orderId },
+          createdTime: Number(order.createdTime ?? Date.now()),
+          cardTransaction: { type: 'CREDIT_CARD' },
+        }
+      } catch {
+        /* fall through */
+      }
+    }
+    throw restError
+  }
 }
 
 export async function fetchOrder(

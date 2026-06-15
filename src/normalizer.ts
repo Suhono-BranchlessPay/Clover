@@ -91,6 +91,31 @@ export function normalizeOrderToBpPayload(
   }
 }
 
+export function buildFixturePaymentPayload(
+  merchantId: string,
+  paymentId: string,
+  fixture: {
+    orderId?: string
+    amountCents: number
+    tipCents?: number
+    taxCents?: number
+    paymentMethod?: string
+    currency?: string
+  },
+): BpAnchorPayload {
+  const payment: CloverPayment = {
+    id: paymentId,
+    amount: fixture.amountCents,
+    tipAmount: fixture.tipCents ?? 0,
+    taxAmount: fixture.taxCents ?? 0,
+    currency: fixture.currency ?? 'USD',
+    order: fixture.orderId ? { id: fixture.orderId } : undefined,
+    createdTime: Date.now(),
+    cardTransaction: { type: fixture.paymentMethod ?? 'CREDIT_CARD' },
+  }
+  return normalizePaymentToBpPayload(merchantId, payment)
+}
+
 export function buildEnrichmentPatch(payload: BpAnchorPayload): Partial<StoredAnchorRecord> {
   return {
     amount: payload.amount,
