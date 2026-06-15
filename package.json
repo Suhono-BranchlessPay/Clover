@@ -8,6 +8,7 @@
     "test:watch": "vitest",
     "test:m1:live": "vitest run tests/m1.live.test.ts",
     "m1:live": "tsx scripts/test_m1_live.ts",
+    "e2e:sandbox": "tsx scripts/e2e_sandbox_pipeline.ts",
     "build": "tsc --noEmit",
     "typecheck": "tsc --noEmit"
   },

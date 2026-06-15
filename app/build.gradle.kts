@@ -13,8 +13,8 @@ android {
         applicationId = "com.branchlesspay.auditshield.clover"
         minSdk = 21
         targetSdk = 34
-        versionCode = 1
-        versionName = "0.1.0-m2"
+        versionCode = 4
+        versionName = "1.0.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }

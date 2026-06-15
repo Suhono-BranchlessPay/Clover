@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate Sunmi App Store PNG assets (icon, feature graphic, screenshots)."""
+"""Generate Clover App Market PNG assets (icon, feature graphic, screenshots)."""
 
 from __future__ import annotations
 
