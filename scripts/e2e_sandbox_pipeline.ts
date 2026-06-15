@@ -159,10 +159,11 @@ async function main(): Promise<number> {
   )
 
   let result = results[0]
-  if ((!result?.enriched || !result.payload) && arg('fixture', '') === 'true') {
+  const allowFixture = arg('fixture', '') === 'true' || arg('auto-fixture', 'true') !== 'false'
+  if ((!result?.enriched || !result.payload) && allowFixture && paymentId) {
     const amountCents = Number(arg('amount-cents', '1400'))
     const tipCents = Number(arg('tip-cents', '100'))
-    const { buildFixturePaymentPayload } = await import('../src/normalizer.js')
+    const { buildFixturePaymentPayload, buildEnrichmentPatch } = await import('../src/normalizer.js')
     const payload = buildFixturePaymentPayload(env.merchantId, paymentId, {
       orderId: orderIdArg,
       amountCents,
@@ -174,12 +175,15 @@ async function main(): Promise<number> {
       paymentId,
       orderId: orderIdArg,
       payload,
-      patch: (await import('../src/normalizer.js')).buildEnrichmentPatch(payload),
+      patch: buildEnrichmentPatch(payload),
     }
-    console.log('Using dashboard fixture (API token lacks ECOMM read permission)')
+    console.log('\nUsing dashboard fixture — Clover API could not read ECOMM order (403/404).')
+    console.log('Run: python scripts/diagnose_clover_token.py')
+    console.log('Fix token: Test Merchants -> Bp Audit shield -> gear -> API Tokens -> generate NEW\n')
   }
   if (!result?.enriched || !result.payload) {
     console.error('Enrichment failed:', result?.error ?? result?.skipped)
+    console.error('Try: --fixture=true  or  python scripts/diagnose_clover_token.py')
     return 1
   }
 
