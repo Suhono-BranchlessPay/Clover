@@ -3,7 +3,9 @@ import {
   applyEnrichmentPatch,
   enrichCloverAnchor,
   enrichFromWebhookMerchant,
+  processCloverWebhook,
 } from '../src/cloverEnrichmentWorker.js'
+import { CLOVER_SANDBOX_API_BASE } from '../src/config.js'
 import type { CloverOrder, CloverPayment } from '../src/types.js'
 
 const payment: CloverPayment = {
@@ -93,5 +95,41 @@ describe('cloverEnrichmentWorker', () => {
     expect(updated.amount).toBe(65)
     expect(updated.metadata?.erp).toBe('clover')
     expect(updated.metadata?.last4).toBe('9999')
+  })
+
+  it('processCloverWebhook enriches payment refs (xero-style pipeline)', async () => {
+    const { results, verification } = await processCloverWebhook(
+      {
+        merchants: {
+          M1: { payments: [{ objectId: 'PAY-LIVE' }] },
+        },
+      },
+      { api: mockApi() },
+    )
+
+    expect(verification).toBe(false)
+    expect(results).toHaveLength(1)
+    expect(results[0].enriched).toBe(true)
+    expect(results[0].payload?.event_type).toBe('clover_payment_created')
+    expect(results[0].payload?.amount).toBe(65)
+  })
+
+  it('processCloverWebhook handles verification challenge', async () => {
+    const { verification, results } = await processCloverWebhook(
+      { verificationCode: '12345' },
+      { api: mockApi() },
+    )
+    expect(verification).toBe(true)
+    expect(results).toEqual([])
+  })
+
+  it('returns error result when Clover API fails', async () => {
+    const fetchImpl = async () => new Response('not found', { status: 404 })
+    const result = await enrichCloverAnchor(
+      { merchantId: 'M1', paymentId: 'MISSING' },
+      { api: { accessToken: 't', apiBase: CLOVER_SANDBOX_API_BASE, fetchImpl } },
+    )
+    expect(result.enriched).toBe(false)
+    expect(result.error).toContain('404')
   })
 })

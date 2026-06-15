@@ -1,4 +1,5 @@
 export * from './types.js'
+export * from './config.js'
 export * from './webhookParser.js'
 export * from './cloverApiClient.js'
 export * from './normalizer.js'

@@ -28,17 +28,17 @@ def legacy_content_hash(payload: dict) -> str:
 def build_test_payload() -> dict:
     suffix = uuid.uuid4().hex[:8].upper()
     return {
-        "event_type": "sunmi_transaction",
+        "event_type": "clover_transaction",
         "reference_id": "TEST-%s" % suffix,
-        "amount": 10000,
-        "currency": "IDR",
+        "amount": 15.0,
+        "currency": "USD",
         "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
-        "vendor": "sunmi",
+        "vendor": "clover",
         "merchant_id": "DEV-SN-001",
         "metadata": {
-            "erp": "sunmi_pos",
-            "erp_system": "Sunmi Android POS",
-            "device_model": "V2 Pro",
+            "erp": "clover",
+            "erp_system": "Clover POS",
+            "device_model": "Clover Flex",
             "device_sn": "DEV-SN-001",
         },
     }

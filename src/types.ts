@@ -104,6 +104,7 @@ export interface EnrichmentInput {
 export interface EnrichmentResult {
   enriched: boolean
   skipped?: string
+  error?: string
   paymentId?: string
   orderId?: string
   payload?: BpAnchorPayload

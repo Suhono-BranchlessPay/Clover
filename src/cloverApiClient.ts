@@ -1,6 +1,7 @@
 import type { CloverApiConfig, CloverOrder, CloverPayment } from './types.js'
+import { CLOVER_SANDBOX_API_BASE } from './config.js'
 
-const DEFAULT_BASE = 'https://api.clover.com'
+const DEFAULT_BASE = CLOVER_SANDBOX_API_BASE
 
 export class CloverApiError extends Error {
   constructor(
@@ -63,6 +64,28 @@ export async function fetchOrder(
     config,
     `/v3/merchants/${encodeURIComponent(merchantId)}/orders/${encodeURIComponent(orderId)}?expand=lineItems,payments`,
   )
+}
+
+export async function fetchMerchant(
+  config: CloverApiConfig,
+  merchantId: string,
+): Promise<{ id: string; name?: string }> {
+  return cloverGet<{ id: string; name?: string }>(
+    config,
+    `/v3/merchants/${encodeURIComponent(merchantId)}`,
+  )
+}
+
+export async function listPayments(
+  config: CloverApiConfig,
+  merchantId: string,
+  limit = 5,
+): Promise<CloverPayment[]> {
+  const body = await cloverGet<{ elements?: CloverPayment[] }>(
+    config,
+    `/v3/merchants/${encodeURIComponent(merchantId)}/payments?limit=${limit}`,
+  )
+  return body.elements ?? []
 }
 
 export function centsToDollars(cents: number | undefined | null): number {

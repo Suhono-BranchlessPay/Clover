@@ -55,4 +55,15 @@ describe('cloverApiClient', () => {
       fetchPayment({ accessToken: 'bad', fetchImpl }, 'M1', 'X'),
     ).rejects.toBeInstanceOf(CloverApiError)
   })
+
+  it('defaults to sandbox API base when apiBase omitted', async () => {
+    let requestedUrl = ''
+    const fetchImpl = async (url: string) => {
+      requestedUrl = url
+      return new Response(JSON.stringify({ id: 'P1', amount: 100 }), { status: 200 })
+    }
+
+    await fetchPayment({ accessToken: 't', fetchImpl }, 'M1', 'P1')
+    expect(requestedUrl).toContain('apisandbox.dev.clover.com')
+  })
 })

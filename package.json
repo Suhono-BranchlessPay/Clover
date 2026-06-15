@@ -6,11 +6,15 @@
   "scripts": {
     "test": "vitest run",
     "test:watch": "vitest",
+    "test:m1:live": "vitest run tests/m1.live.test.ts",
+    "m1:live": "tsx scripts/test_m1_live.ts",
     "build": "tsc --noEmit",
     "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
     "@types/node": "^22.10.0",
+    "dotenv": "^16.4.7",
+    "tsx": "^4.19.2",
     "typescript": "~5.6.3",
     "vitest": "^2.1.8"
   }

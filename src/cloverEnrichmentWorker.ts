@@ -1,4 +1,5 @@
-import { fetchOrder, fetchPayment } from './cloverApiClient.js'
+import { CloverApiError, fetchOrder, fetchPayment } from './cloverApiClient.js'
+import { createWorkerOptionsFromEnv } from './config.js'
 import {
   buildEnrichmentPatch,
   CLOVER_EVENT_ORDER_CREATED,
@@ -9,8 +10,10 @@ import {
   normalizeOrderToBpPayload,
   normalizePaymentToBpPayload,
 } from './normalizer.js'
+import { isVerificationWebhook, parseCloverWebhook } from './webhookParser.js'
 import type {
   CloverApiConfig,
+  CloverWebhookBody,
   EnrichmentInput,
   EnrichmentResult,
   StoredAnchorRecord,
@@ -19,6 +22,46 @@ import type {
 export interface CloverEnrichmentWorkerOptions {
   api: CloverApiConfig
   preferOrderWhenNoPayment?: boolean
+}
+
+export interface ProcessCloverWebhookResult {
+  verification: boolean
+  results: EnrichmentResult[]
+}
+
+export function createCloverEnrichmentWorker(
+  env: Record<string, string | undefined> = process.env,
+): CloverEnrichmentWorkerOptions {
+  return createWorkerOptionsFromEnv(env)
+}
+
+/**
+ * Main entry — mirror xeroEnrichmentWorker / BP webhook handler wiring.
+ * Webhook has no amount → fetch payment/order from Clover REST → BP payload patch.
+ */
+export async function processCloverWebhook(
+  body: CloverWebhookBody,
+  options: CloverEnrichmentWorkerOptions,
+): Promise<ProcessCloverWebhookResult> {
+  if (isVerificationWebhook(body)) {
+    return { verification: true, results: [] }
+  }
+
+  const refs = parseCloverWebhook(body)
+  const results: EnrichmentResult[] = []
+
+  for (const ref of refs) {
+    results.push(
+      ...(await enrichFromWebhookMerchant(
+        ref.merchantId,
+        ref.paymentIds,
+        ref.orderIds,
+        options,
+      )),
+    )
+  }
+
+  return { verification: false, results }
 }
 
 export async function enrichCloverAnchor(
@@ -32,15 +75,25 @@ export async function enrichCloverAnchor(
     return { enriched: false, skipped: 'amount_already_set' }
   }
 
-  if (paymentId) {
-    return enrichFromPayment(merchantId, paymentId, eventType, options)
-  }
+  try {
+    if (paymentId) {
+      return await enrichFromPayment(merchantId, paymentId, eventType, options)
+    }
 
-  if (orderId) {
-    return enrichFromOrder(merchantId, orderId, eventType, options)
-  }
+    if (orderId) {
+      return await enrichFromOrder(merchantId, orderId, eventType, options)
+    }
 
-  return { enriched: false, skipped: 'missing_payment_or_order_id' }
+    return { enriched: false, skipped: 'missing_payment_or_order_id' }
+  } catch (err) {
+    const message =
+      err instanceof CloverApiError
+        ? `${err.message}${err.body ? `: ${err.body.slice(0, 120)}` : ''}`
+        : err instanceof Error
+          ? err.message
+          : String(err)
+    return { enriched: false, error: message, paymentId, orderId }
+  }
 }
 
 async function enrichFromPayment(
