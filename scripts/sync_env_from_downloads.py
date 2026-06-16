@@ -128,6 +128,16 @@ def main() -> int:
             lines = upsert(lines, key, incoming[key])
 
     write_env(ENV_PATH, lines)
+
+    local_props_path = os.path.join(ROOT, "local.properties")
+    local_lines = read_env(local_props_path) if os.path.isfile(local_props_path) else []
+    if not local_lines:
+        local_lines = ["# Local Android build — do NOT commit"]
+    if incoming.get("CLOVER_APP_ID"):
+        local_lines = upsert(local_lines, "clover.app.id", incoming["CLOVER_APP_ID"])
+        write_env(local_props_path, local_lines)
+        print("Updated local.properties: clover.app.id")
+
     print("Updated .env keys:", ", ".join(sorted(incoming.keys())))
     return 0
 

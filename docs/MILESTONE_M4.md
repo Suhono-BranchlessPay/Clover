@@ -2,7 +2,7 @@
 
 **Status:** CLOSED (assets + release build scripts)  
 **Repo:** https://github.com/Suhono-BranchlessPay/Clover/tree/dev  
-**Version:** `1.0.0` (versionCode 4)
+**Version:** `1.0.0` (versionCode 5)
 
 ---
 

@@ -4,6 +4,9 @@ sdk.dir=C\:\\Users\\Thinkbook\\AppData\\Local\\Android\\Sdk
 # Debug only — pre-fills Settings license field (not bundled in release APK)
 bp.license.key=
 
+# Clover App ID for PaymentConnector (from CLOVER_APP_ID in .env)
+clover.app.id=
+
 # Release signing — run scripts/generate_release_keystore.ps1 once, then fill these:
 release.keystore.file=keystore/bp-audit-shield-release.jks
 release.keystore.password=

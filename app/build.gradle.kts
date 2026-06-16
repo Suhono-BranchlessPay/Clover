@@ -13,7 +13,7 @@ android {
         applicationId = "com.branchlesspay.auditshield.clover"
         minSdk = 21
         targetSdk = 34
-        versionCode = 4
+        versionCode = 5
         versionName = "1.0.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
@@ -36,18 +36,22 @@ android {
         }
     }
 
+    val localProps = Properties()
+    val localFile = rootProject.file("local.properties")
+    if (localFile.exists()) {
+        localFile.inputStream().use { localProps.load(it) }
+    }
+    val cloverAppId = localProps.getProperty("clover.app.id", "")
+
     buildTypes {
         debug {
-            val localProps = Properties()
-            val localFile = rootProject.file("local.properties")
-            if (localFile.exists()) {
-                localFile.inputStream().use { localProps.load(it) }
-            }
             val devKey = localProps.getProperty("bp.license.key", "")
             buildConfigField("String", "DEFAULT_LICENSE_KEY", "\"$devKey\"")
+            buildConfigField("String", "CLOVER_APP_ID", "\"$cloverAppId\"")
         }
         release {
             buildConfigField("String", "DEFAULT_LICENSE_KEY", "\"\"")
+            buildConfigField("String", "CLOVER_APP_ID", "\"$cloverAppId\"")
             isMinifyEnabled = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
@@ -81,7 +85,11 @@ dependencies {
     implementation("androidx.recyclerview:recyclerview:1.3.2")
 
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
-    implementation("com.google.code.gson:gson:2.10.1")
+    implementation("com.google.code.gson:gson:2.9.1")
+
+    // Clover POS SDK — A920 Pro, Flex, Mini (Maven Central latest: 323)
+    implementation("com.clover.sdk:clover-android-sdk:323")
+    implementation("com.clover.sdk:clover-android-connector-sdk:323")
 
     testImplementation("junit:junit:4.13.2")
     testImplementation("org.json:json:20240303")

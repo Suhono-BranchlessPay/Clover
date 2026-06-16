@@ -201,6 +201,46 @@ class PaymentEventTest {
     }
 }
 
+class CompositePaymentCaptureTest {
+    @Test
+    fun deduplicatesSameTransactionId() {
+        val first = FakeCapture("a")
+        val second = FakeCapture("b")
+        val composite = CompositePaymentCapture(listOf(first, second))
+        val events = mutableListOf<PaymentEvent>()
+        composite.start { events.add(it) }
+
+        val payment = PaymentEvent(
+            transactionId = "PAY-DEDUP",
+            amountCents = 900,
+            currency = "USD",
+            paymentMethod = "card",
+        )
+        first.emit(payment)
+        second.emit(payment)
+
+        composite.stop()
+        assertEquals(1, events.size)
+        assertEquals("PAY-DEDUP", events[0].transactionId)
+    }
+
+    private class FakeCapture(override val sourceName: String) : PaymentCapture {
+        private var callback: ((PaymentEvent) -> Unit)? = null
+
+        override fun start(onPayment: (PaymentEvent) -> Unit) {
+            callback = onPayment
+        }
+
+        override fun stop() {
+            callback = null
+        }
+
+        fun emit(event: PaymentEvent) {
+            callback?.invoke(event)
+        }
+    }
+}
+
 class BpAnchorPayloadTest {
     @Test
     fun buildTestTransaction_hasCloverFields() {

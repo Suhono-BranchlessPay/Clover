@@ -5,7 +5,7 @@ Blockchain audit trail for Clover POS (USA #2 POS, 1M+ merchants).
 | Item | Value |
 |------|-------|
 | Android package | `com.branchlesspay.auditshield.clover` |
-| Version | **1.0.0** (versionCode 4) |
+| Version | **1.0.0** (versionCode 5) |
 | API (sandbox) | `https://apisandbox.dev.clover.com` |
 | BP webhook | `POST https://branchlesspay.com/api/v1/webhook/clover` |
 | GitHub | https://github.com/Suhono-BranchlessPay/Clover/tree/dev |

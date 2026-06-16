@@ -68,6 +68,7 @@ class BpAuditService : Service() {
 
     override fun onDestroy() {
         paymentCapture?.stop()
+        debugCapture?.stop()
         super.onDestroy()
     }
 
@@ -91,7 +92,7 @@ class BpAuditService : Service() {
         }
         val result = processor.processPayment(
             event = event,
-            deviceModel = DeviceInfo.model(),
+            deviceModel = DeviceInfo.displayModel(),
             deviceSn = DeviceInfo.serial(this),
         )
         if (!result.ok && !result.queuedOffline) {

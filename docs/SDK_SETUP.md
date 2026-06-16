@@ -3,39 +3,46 @@
 ## Prerequisites
 
 - Clover developer account: https://www.clover.com/developers
-- App ID + API token (from Bos via WhatsApp)
-- Clover device or sandbox
+- App ID (`CLOVER_APP_ID`) + BP license key
+- Clover device: **A920 Pro**, **Flex**, or **Mini** (or sandbox devkit)
 
-## Add SDK AAR
+## Gradle dependencies (Maven Central)
 
-1. Download from https://github.com/clover/clover-android-sdk
-2. Place AAR in `app/libs/clover-android-sdk.aar`
-3. Add to `app/build.gradle.kts`:
+Already in `app/build.gradle.kts`:
 
 ```kotlin
-implementation(files("libs/clover-android-sdk.aar"))
+implementation("com.clover.sdk:clover-android-sdk:323")
+implementation("com.clover.sdk:clover-android-connector-sdk:323")
 ```
 
-## Wire payment capture
+> Maven Central latest is **323** (May 2025). Pin both artifacts to the same version.
 
-In `CloverPaymentCapture.kt`, connect `CloverConnector`:
+## Clover App ID
 
-```kotlin
-// Pseudocode — see Clover SDK docs
-connector.addListener(object : IPaymentConnectorListener {
-    override fun onSaleResponse(response: SaleResponse) {
-        val payment = response.payment ?: return
-        val event = PaymentEvent(
-            transactionId = payment.id,
-            amountCents = payment.amount,
-            currency = payment.currency ?: "USD",
-            paymentMethod = payment.cardTransaction?.cardType ?: "card",
-            merchantId = merchantId,
-        )
-        callback?.invoke(event)
-    }
-})
+Set in `local.properties`:
+
+```properties
+clover.app.id=YOUR_CLOVER_APP_ID
 ```
+
+Synced from `Downloads\Clover\.env.txt` via:
+
+```powershell
+python scripts/sync_env_from_downloads.py
+```
+
+Used as `remoteApplicationId` for `PaymentConnector`.
+
+## Payment capture (wired)
+
+| Source | Class | Trigger |
+|--------|-------|---------|
+| Register sale broadcast | `CloverPaymentCapture` | `Intents.ACTION_PAYMENT_PROCESSED` |
+| SDK Payment parcel | `CloverPaymentMapper.fromIntent()` | `Intents.EXTRA_PAYMENT` |
+| Connector callback | `CloverSdkPaymentCapture` | `IPaymentConnectorListener.onSaleResponse()` |
+| Emulator | `DebugPaymentCapture` | Simulate Payment button |
+
+`CompositePaymentCapture` deduplicates by payment ID.
 
 ## Webhook vs on-device
 
@@ -45,3 +52,7 @@ connector.addListener(object : IPaymentConnectorListener {
 | M2 Android APK | `clover_payment` | Device sale response |
 
 Both use cents internally on Clover; BP anchor `amount` is dollars for USD.
+
+## Permissions
+
+`AndroidManifest.xml` includes `GET_ACCOUNTS` for `CloverAccount.getAccount()`.

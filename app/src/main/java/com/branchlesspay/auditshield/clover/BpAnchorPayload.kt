@@ -12,6 +12,19 @@ import java.util.UUID
 object DeviceInfo {
     fun model(): String = Build.MODEL ?: "unknown"
 
+    /** Friendly label for supported Clover targets (A920 Pro, Flex, Mini). */
+    fun displayModel(): String {
+        val raw = model().uppercase(Locale.US)
+        return when {
+            raw.contains("A920") -> "Clover A920 Pro"
+            raw.contains("FLEX") -> "Clover Flex"
+            raw.contains("MINI") -> "Clover Mini"
+            raw.contains("STATION") -> "Clover Station"
+            raw.contains("CLOVER") -> model()
+            else -> model()
+        }
+    }
+
     fun serial(context: Context): String {
         return try {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
